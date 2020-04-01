@@ -167,6 +167,7 @@ begin
 		DebugEnabled := false;
 		SavedGameFileName := 'SAVED';
 		SavedBoardFileName := 'TEMP';
+		SavedDemoFileName := 'DEMO';
 		GenerateTransitionTable;
 		WorldCreate;
 

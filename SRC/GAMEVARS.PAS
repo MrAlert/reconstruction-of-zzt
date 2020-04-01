@@ -156,6 +156,7 @@ interface
 		LoadedGameFileName: TString50;
 		SavedGameFileName: TString50;
 		SavedBoardFileName: TString50;
+		SavedDemoFileName: TString50;
 		StartupWorldFileName: TString50;
 		Board: TBoard;
 		World: TWorld;

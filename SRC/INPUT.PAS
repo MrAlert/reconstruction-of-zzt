@@ -53,6 +53,21 @@ interface
 		KEY_DELETE = #211;
 		KEY_HOME = #212;
 		KEY_END = #213;
+
+		DEMO_VERSION = $0010;
+	type
+		TDemoName = string[20];
+		TDemoHeader = record
+			Version: integer;
+			Name: TDemoName;
+			RandomState: longint;
+		end;
+		TDemoBlock = record
+			Count: integer;
+			DeltaX, DeltaY: integer;
+			ShiftPressed: boolean;
+			KeyPressed: char;
+		end;
 	var
 		InputDeltaX, InputDeltaY: integer;
 		InputShiftPressed: boolean;
@@ -64,13 +79,16 @@ interface
 		InputMouseActivationX, InputMouseActivationY: integer;
 		InputMouseButtonX, InputMouseButtonY: integer;
 		InputJoystickMoved: boolean;
+	function InputDemoRecord(fileName: string; var name: TDemoName): boolean;
+	function InputDemoPlay(fileName: string; var name: TDemoName): boolean;
+	procedure InputDemoStop;
 	procedure InputUpdate;
 	procedure InputInitDevices;
 	procedure InputReadWaitKey;
 	function InputConfigure: boolean;
 
 implementation
-uses Dos, Crt, Keys, Sounds;
+uses Dos, Crt, Keys, Sounds, Video;
 
 const
 	PORT_JOYSTICK = $0201;
@@ -80,6 +98,11 @@ var
 	JoystickXMin, JoystickXCenter, JoystickXMax: integer;
 	JoystickYMin, JoystickYCenter, JoystickYMax: integer;
 	InputKeyBuffer: string;
+	DemoFile: file;
+	InputCount: longint;
+	InputDemoActive: boolean;
+	InputDemoRecording: boolean;
+	InputDemoBlock: TDemoBlock;
 
 function InputIsJoystickButtonPressed: boolean;
 	begin
@@ -188,6 +211,145 @@ procedure InputCalibrateJoystick;
 			if UpCase(charTyped) = 'Y' then
 				goto CalibrationStart;
 		end;
+	end;
+
+procedure InputDemoDisplay;
+	var
+		disp: string[16];
+	begin
+		if InputCount >= 0 then begin
+			Str(InputCount, disp);
+		end else begin
+			if InputDemoRecording then
+				disp := 'ERROR'
+			else
+				disp := 'END';
+		end;
+		while Length(disp) < 16 do
+			disp := disp + ' ';
+		if InputShiftPressed then
+			disp[13] := 'S';
+		if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
+			disp[14] := '?';
+			if InputDeltaX = 0 then begin
+				if InputDeltaY = -1 then
+					disp[14] := #24
+				else if InputDeltaY = 1 then
+					disp[14] := #25;
+			end else if InputDeltaY = 0 then begin
+				if InputDeltaX = -1 then
+					disp[14] := #27
+				else if InputDeltaX = 1 then
+					disp[14] := #26;
+			end;
+		end;
+		if InputKeyPressed <> #0 then
+			disp[16] := InputKeyPressed;
+		VideoWriteText(62, 24, $1E, disp);
+	end;
+
+procedure InputDemoHandle;
+	label
+		OnError;
+	begin
+		if InputCount >= 0 then begin
+			if InputDemoRecording then begin
+				if (InputDemoBlock.Count = 0)
+					or (InputDemoBlock.DeltaX <> InputDeltaX)
+					or (InputDemoBlock.DeltaY <> InputDeltaY)
+					or (InputDemoBlock.ShiftPressed <> InputShiftPressed)
+					or (InputDemoBlock.KeyPressed <> InputKeyPressed) then
+				begin
+					if InputDemoBlock.Count <> 0 then begin
+						BlockWrite(DemoFile, InputDemoBlock, SizeOf(InputDemoBlock));
+						if IOResult <> 0 then goto OnError;
+					end;
+					InputDemoBlock.Count := 1;
+					InputDemoBlock.DeltaX := InputDeltaX;
+					InputDemoBlock.DeltaY := InputDeltaY;
+					InputDemoBlock.ShiftPressed := InputShiftPressed;
+					InputDemoBlock.KeyPressed := InputKeyPressed;
+				end else begin
+					InputDemoBlock.Count := InputDemoBlock.Count + 1;
+				end;
+			end else begin
+				if InputDemoBlock.Count = 0 then begin
+					BlockRead(DemoFile, InputDemoBlock, SizeOf(InputDemoBlock));
+					if IOResult <> 0 then goto OnError;
+				end;
+				InputDeltaX := InputDemoBlock.DeltaX;
+				InputDeltaY := InputDemoBlock.DeltaY;
+				InputShiftPressed := InputDemoBlock.ShiftPressed;
+				InputKeyPressed := InputDemoBlock.KeyPressed;
+				InputDemoBlock.Count := InputDemoBlock.Count - 1;
+			end;
+			InputCount := InputCount + 1;
+		end;
+		InputDemoDisplay;
+		exit;
+	OnError:
+		Close(DemoFile);
+		InputCount := -1;
+	end;
+
+function InputDemoRecord(fileName: string; var name: TDemoName): boolean;
+	var
+		header: TDemoHeader;
+	label
+		OnError;
+	begin
+		Assign(DemoFile, fileName);
+		Rewrite(DemoFile, 1);
+		if IOResult <> 0 then goto OnError;
+		header.Version := DEMO_VERSION;
+		header.Name := name;
+		header.RandomState := RandSeed;
+		BlockWrite(DemoFile, header, SizeOf(header));
+		if IOResult <> 0 then goto OnError;
+		InputDemoBlock.Count := 0;
+		InputDemoActive := true;
+		InputDemoRecording := true;
+		InputCount := 0;
+		InputDemoRecord := true;
+		exit;
+	OnError:
+		Close(DemoFile);
+		InputDemoRecord := false;
+	end;
+
+function InputDemoPlay(fileName: string; var name: TDemoName): boolean;
+	var
+		header: TDemoHeader;
+	label
+		OnError;
+	begin
+		Assign(DemoFile, fileName);
+		Reset(DemoFile, 1);
+		if IOResult <> 0 then goto OnError;
+		BlockRead(DemoFile, header, SizeOf(header));
+		if IOResult <> 0 then goto OnError;
+		if header.Version <> DEMO_VERSION then goto OnError;
+		name := header.Name;
+		RandSeed := header.RandomState;
+		InputDemoBlock.Count := 0;
+		InputDemoActive := true;
+		InputDemoRecording := false;
+		InputCount := 0;
+		InputDemoPlay := true;
+		exit;
+	OnError:
+		Close(DemoFile);
+		InputDemoPlay := false;
+	end;
+
+procedure InputDemoStop;
+	begin
+		if InputDemoActive and (InputCount >= 0) then begin
+			if InputDemoRecording and (InputDemoBlock.Count <> 0) then
+				BlockWrite(DemoFile, InputDemoBlock, SizeOf(InputDemoBlock));
+			Close(DemoFile);
+		end;
+		InputDemoActive := false;
 	end;
 
 procedure InputUpdate;
@@ -324,6 +486,9 @@ procedure InputUpdate;
 			InputLastDeltaX := InputDeltaX;
 			InputLastDeltaY := InputDeltaY;
 		end;
+
+		if InputDemoActive then
+			InputDemoHandle;
 	end;
 
 function InputInitMouse: boolean;
@@ -382,10 +547,19 @@ function InputConfigure: boolean;
 	end;
 
 procedure InputReadWaitKey;
+	var
+		demoActive: boolean;
 	begin
-		repeat
-			InputUpdate
-		until InputKeyPressed <> #0;
+		if (not InputDemoActive) or InputDemoRecording then begin
+			demoActive := InputDemoActive;
+			InputDemoActive := false;
+			repeat
+				InputUpdate
+			until InputKeyPressed <> #0;
+			InputDemoActive := demoActive;
+		end;
+		if InputDemoActive then
+			InputDemoHandle;
 	end;
 
 begin
@@ -402,4 +576,6 @@ begin
 	InputMouseButtonX := 0;
 	InputMouseButtonY := 0;
 	InputKeyBuffer := '';
+	InputCount := -1;
+	InputDemoActive := false;
 end.

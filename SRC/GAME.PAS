@@ -1464,21 +1464,26 @@ procedure GamePlayLoop(boardChanged: boolean);
 				else
 					VideoWriteText(69, 8, $1F, 'Untitled');
 
-				VideoWriteText(62, 11, $70, ' P ');
-				VideoWriteText(65, 11, $1F, ' Play');
-				VideoWriteText(62, 12, $30, ' R ');
-				VideoWriteText(65, 12, $1E, ' Restore game');
-				VideoWriteText(62, 13, $70, ' Q ');
-				VideoWriteText(65, 13, $1E, ' Quit');
-				VideoWriteText(62, 16, $30, ' A ');
-				VideoWriteText(65, 16, $1F, ' About ZZT!');
-				VideoWriteText(62, 17, $70, ' H ');
-				VideoWriteText(65, 17, $1E, ' High Scores');
+				VideoWriteText(62, 10, $70, ' P ');
+				VideoWriteText(65, 10, $1F, ' Play');
+				VideoWriteText(62, 11, $30, ' R ');
+				VideoWriteText(65, 11, $1E, ' Restore game');
+				VideoWriteText(62, 12, $70, ' Q ');
+				VideoWriteText(65, 12, $1E, ' Quit');
+				VideoWriteText(62, 14, $30, ' A ');
+				VideoWriteText(65, 14, $1F, ' About ZZT!');
+				VideoWriteText(62, 15, $70, ' H ');
+				VideoWriteText(65, 15, $1E, ' High Scores');
 
 				if EditorEnabled then begin
-					VideoWriteText(62, 18, $30, ' E ');
-					VideoWriteText(65, 18, $1E, ' Board Editor');
+					VideoWriteText(62, 16, $30, ' E ');
+					VideoWriteText(65, 16, $1E, ' Board Editor');
 				end;
+
+				VideoWriteText(62, 18, $70, ' D ');
+				VideoWriteText(65, 18, $1E, ' Record Demo');
+				VideoWriteText(62, 19, $30, ' L ');
+				VideoWriteText(65, 19, $1E, ' Play Demo');
 			end;
 		end;
 	begin
@@ -1607,6 +1612,32 @@ procedure GamePlayLoop(boardChanged: boolean);
 		SoundBlockQueueing := false;
 	end;
 
+function GameDemoRecord: boolean;
+	var
+		f: file;
+	begin
+		GameDemoRecord := false;
+		SidebarPromptString('Record demo:', '.ZZD', SavedDemoFileName, PROMPT_ALPHANUM);
+		if WorldLoad(World.Info.Name, '.ZZT', false) then
+			GameDemoRecord := InputDemoRecord(SavedDemoFileName + '.ZZD', World.Info.Name);
+		ReturnBoardId := World.Info.CurrentBoard;
+	end;
+
+function GameDemoPlay: boolean;
+	var
+		f: file;
+	begin
+		GameDemoPlay := false;
+		SidebarPromptString('Play demo:', '.ZZD', SavedDemoFileName, PROMPT_ALPHANUM);
+		if InputDemoPlay(SavedDemoFileName + '.ZZD', World.Info.Name) then begin
+			if WorldLoad(World.Info.Name, '.ZZT', false) then
+				GameDemoPlay := true
+			else
+				InputDemoStop;
+			ReturnBoardId := World.Info.CurrentBoard;
+		end;
+	end;
+
 procedure GameTitleLoop;
 	var
 		boardChanged: boolean;
@@ -1663,6 +1694,20 @@ procedure GameTitleLoop;
 							startPlay := true;
 						end;
 					end;
+					'D': begin
+						startPlay := GameDemoRecord;
+						if startPlay then begin
+							BoardChange(ReturnBoardId);
+							BoardEnter;
+						end;
+					end;
+					'L': begin
+						startPlay := GameDemoPlay;
+						if startPlay then begin
+							BoardChange(ReturnBoardId);
+							BoardEnter;
+						end;
+					end;
 					'H': begin
 						HighScoresLoad;
 						HighScoresDisplay(1);
@@ -1679,6 +1724,7 @@ procedure GameTitleLoop;
 					GameStateElement := E_PLAYER;
 					GamePaused := true;
 					GamePlayLoop(true);
+					InputDemoStop;
 					boardChanged := true;
 				end;
 			until boardChanged or GameTitleExitRequested;

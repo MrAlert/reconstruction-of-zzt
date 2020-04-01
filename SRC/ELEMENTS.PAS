@@ -1494,7 +1494,7 @@ procedure ElementPlayerTick(statId: integer);
 
 procedure ElementMonitorTick(statId: integer);
 	begin
-		if UpCase(InputKeyPressed) in [#27, 'A', 'E', 'H', 'N', 'P', 'Q', 'R', 'S', 'W', '|'] then
+		if UpCase(InputKeyPressed) in [#27, 'A', 'E', 'H', 'N', 'P', 'Q', 'R', 'S', 'W', 'D', 'L', '|'] then
 			GamePlayExitRequested := true;
 	end;
 
