@@ -23,6 +23,7 @@
 	SOFTWARE.
 }
 
+{$I-}
 unit Input;
 
 interface
@@ -54,12 +55,13 @@ interface
 		KEY_HOME = #212;
 		KEY_END = #213;
 
-		DEMO_VERSION = $0010;
+		DEMO_VERSION = $0011;
 	type
 		TDemoName = string[20];
 		TDemoHeader = record
 			Version: integer;
 			Name: TDemoName;
+			Speed: byte;
 			RandomState: longint;
 		end;
 		TDemoBlock = record
@@ -79,8 +81,8 @@ interface
 		InputMouseActivationX, InputMouseActivationY: integer;
 		InputMouseButtonX, InputMouseButtonY: integer;
 		InputJoystickMoved: boolean;
-	function InputDemoRecord(fileName: string; var name: TDemoName): boolean;
-	function InputDemoPlay(fileName: string; var name: TDemoName): boolean;
+	function InputDemoRecord(fileName: string; var name: TDemoName; var speed: byte): boolean;
+	function InputDemoPlay(fileName: string; var name: TDemoName; var speed: byte): boolean;
 	procedure InputDemoStop;
 	procedure InputUpdate;
 	procedure InputInitDevices;
@@ -292,7 +294,7 @@ procedure InputDemoHandle;
 		InputCount := -1;
 	end;
 
-function InputDemoRecord(fileName: string; var name: TDemoName): boolean;
+function InputDemoRecord(fileName: string; var name: TDemoName; var speed: byte): boolean;
 	var
 		header: TDemoHeader;
 	label
@@ -303,6 +305,7 @@ function InputDemoRecord(fileName: string; var name: TDemoName): boolean;
 		if IOResult <> 0 then goto OnError;
 		header.Version := DEMO_VERSION;
 		header.Name := name;
+		header.Speed := speed;
 		header.RandomState := RandSeed;
 		BlockWrite(DemoFile, header, SizeOf(header));
 		if IOResult <> 0 then goto OnError;
@@ -317,7 +320,7 @@ function InputDemoRecord(fileName: string; var name: TDemoName): boolean;
 		InputDemoRecord := false;
 	end;
 
-function InputDemoPlay(fileName: string; var name: TDemoName): boolean;
+function InputDemoPlay(fileName: string; var name: TDemoName; var speed: byte): boolean;
 	var
 		header: TDemoHeader;
 	label
@@ -330,6 +333,7 @@ function InputDemoPlay(fileName: string; var name: TDemoName): boolean;
 		if IOResult <> 0 then goto OnError;
 		if header.Version <> DEMO_VERSION then goto OnError;
 		name := header.Name;
+		speed := header.Speed;
 		RandSeed := header.RandomState;
 		InputDemoBlock.Count := 0;
 		InputDemoActive := true;
@@ -550,7 +554,7 @@ procedure InputReadWaitKey;
 	var
 		demoActive: boolean;
 	begin
-		if (not InputDemoActive) or InputDemoRecording then begin
+		if (not InputDemoActive) or InputDemoRecording or (InputCount < 0) then begin
 			demoActive := InputDemoActive;
 			InputDemoActive := false;
 			repeat

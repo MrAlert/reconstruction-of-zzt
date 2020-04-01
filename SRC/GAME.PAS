@@ -1619,7 +1619,7 @@ function GameDemoRecord: boolean;
 		GameDemoRecord := false;
 		SidebarPromptString('Record demo:', '.ZZD', SavedDemoFileName, PROMPT_ALPHANUM);
 		if WorldLoad(World.Info.Name, '.ZZT', false) then
-			GameDemoRecord := InputDemoRecord(SavedDemoFileName + '.ZZD', World.Info.Name);
+			GameDemoRecord := InputDemoRecord(SavedDemoFileName + '.ZZD', World.Info.Name, TickSpeed);
 		ReturnBoardId := World.Info.CurrentBoard;
 	end;
 
@@ -1629,7 +1629,7 @@ function GameDemoPlay: boolean;
 	begin
 		GameDemoPlay := false;
 		SidebarPromptString('Play demo:', '.ZZD', SavedDemoFileName, PROMPT_ALPHANUM);
-		if InputDemoPlay(SavedDemoFileName + '.ZZD', World.Info.Name) then begin
+		if InputDemoPlay(SavedDemoFileName + '.ZZD', World.Info.Name, TickSpeed) then begin
 			if WorldLoad(World.Info.Name, '.ZZT', false) then
 				GameDemoPlay := true
 			else
@@ -1697,6 +1697,7 @@ procedure GameTitleLoop;
 					'D': begin
 						startPlay := GameDemoRecord;
 						if startPlay then begin
+							ResetMessageNotShownFlags;
 							BoardChange(ReturnBoardId);
 							BoardEnter;
 						end;
@@ -1704,6 +1705,7 @@ procedure GameTitleLoop;
 					'L': begin
 						startPlay := GameDemoPlay;
 						if startPlay then begin
+							ResetMessageNotShownFlags;
 							BoardChange(ReturnBoardId);
 							BoardEnter;
 						end;
