@@ -10,6 +10,12 @@ echo [ Building ZZT.EXE ]
 echo.
 TPC /B /EBIN /GD /ISRC /USRC SRC\ZZT.PAS
 if errorlevel 1 goto error
+echo.
+echo [ Compressing ZZT.EXE ]
+echo.
+cd BIN
+..\TOOLS\LZEXE.EXE ZZT.EXE
+cd ..
 
 echo.
 echo [ Creating DIST/ ]

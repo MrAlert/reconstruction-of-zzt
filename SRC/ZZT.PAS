@@ -304,6 +304,8 @@ var
 
 	HighScoreList: THighScoreList;
 	ConfigRegistrant: string;
+	ConfigWorldFile: TString50;
+	EditorEnabled: boolean;
 	JustStarted: boolean;
 
 procedure InitElementsGame; forward;
@@ -5027,8 +5029,11 @@ procedure GamePlayLoop(boardChanged: boolean);
 				VideoWriteText(65, 16, $1F, ' About ZZT!');
 				VideoWriteText(62, 17, $70, ' H ');
 				VideoWriteText(65, 17, $1E, ' High Scores');
-				VideoWriteText(62, 18, $30, ' E ');
-				VideoWriteText(65, 18, $1E, ' Board Editor');
+
+				if EditorEnabled then begin
+					VideoWriteText(62, 18, $30, ' E ');
+					VideoWriteText(65, 18, $1E, ' Board Editor');
+				end;
 			end;
 		end;
 	begin
@@ -5198,7 +5203,7 @@ procedure GameTitleLoop;
 					'A': begin
 						GameAboutScreen;
 					end;
-					'E': begin
+					'E': if EditorEnabled then begin
 						EditorLoop;
 						ReturnBoardId := World.Info.CurrentBoard;
 						boardChanged := true;
@@ -5705,14 +5710,29 @@ procedure GameConfigure;
 	var
 		cfgFile: text;
 	begin
+		EditorEnabled := true;
+		ConfigRegistrant := '';
+		ConfigWorldFile := '';
+
 		Assign(cfgFile, 'REGISTER');
 		Reset(cfgFile);
 		if IOResult = 0 then begin
-			Read(cfgFile, ConfigRegistrant);
-			if IOResult <> 0 then
-				ConfigRegistrant := '';
-		end else begin
-			ConfigRegistrant := '';
+			ReadLn(cfgFile, ConfigRegistrant);
+			if IOResult = 0 then begin
+				ReadLn(cfgFile, ConfigWorldFile);
+				if IOResult <> 0 then begin
+					ConfigWorldFile := '';
+				end else begin
+					if ConfigWorldFile[1] = '*' then begin
+						EditorEnabled := false;
+						ConfigWorldFile := Copy(ConfigWorldFile, 2, Length(ConfigWorldFile) - 1);
+					end;
+				end;
+			end;
+		end;
+
+		if Length(ConfigWorldFile) <> 0 then begin
+			StartupWorldFileName := ConfigWorldFile;
 		end;
 	end;
 
@@ -5781,6 +5801,7 @@ begin
 	SetCBreak(false);
 	Randomize;
 
+	StartupWorldFileName := 'TOWN';
 	GameConfigure;
 	InitialTextAttr := TextAttr;
 	TextWindowClear := BoardDrawTile;
@@ -5792,10 +5813,13 @@ begin
 	WriteLn;
 	WriteLn('       The Object-Oriented Game          Potomac Computer Systems');
 	WriteLn('                                         10406 Holbrook Drive');
-	WriteLn('       Shareware Version 2.00            Potomac, MD 20854');
+	WriteLn('      Shareware Version 2.00            Potomac, MD 20854');
 	WriteLn;
 	if Length(ConfigRegistrant) <> 0 then begin
-		WriteLn('  Copy registered to ', ConfigRegistrant, ': Thanks for your support.');
+		if ConfigRegistrant = '*' then
+			WriteLn('   Registered copy:  Thanks for supporting shareware.')
+		else
+			WriteLn('  Copy registered to ', ConfigRegistrant, ': Thanks for your support.');
 		WriteLn;
 	end;
 
@@ -5813,7 +5837,6 @@ begin
 	SavedGameFileName := 'SAVED';
 	SavedBoardFileName := 'TEMP';
 	GenerateTransitionTable;
-	StartupWorldFileName := 'TOWN';
 	ParseArguments;
 	WorldCreate;
 

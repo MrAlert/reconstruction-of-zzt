@@ -46,7 +46,7 @@ This release's binary distribution includes:
  * **ZZT.EXE** - the ZZT engine executable,
  * **\*.HLP** - the documentation originally included with ZZT,
  * **DEMO.ZZT** - the official demonstration world, part of ZZT's bundled documentation,
- * **REGISTER** - the ZZT registration file.
+ * **REGISTER** - the ZZT configuration file (set to open DEMO.ZZT by default).
 
 The source code includes the source format for ZZT.EXE, as well as relevant tools.
 
@@ -78,12 +78,25 @@ adequately catalogued and preserved, please contact me at (kontakt at asie dot p
     * **REGISTER** - the ZZT configuration file used for the binary distribution,
 * **SRC** - the reconstructed ZZT source code,
     * **ZZT.PAS** - main source file,
+* **TOOLS** - tools used when building:
+    * **LZEXE.EXE** - LZEXE, a .EXE compression tool by Fabrice Bellard,
 * **BUILD.BAT** - source code build script,
 * **LICENSE.TXT** - licensing terms for the source code release.
 
 ## License
 
 The Reconstruction of ZZT is licensed under the terms of the MIT license as described in LICENSE.TXT, with the exception of certain files included with this release:
+
+* **TOOLS/LZEXE.DOC**, **TOOLS/LZEXE.EXE**:
+
+```
+    LZEXE.EXE v0.91    (c) 1989 Fabrice BELLARD
+
+    Ce programme fait parti du domaine public (FREEWARE),  donc vous pouvez
+  l'utiliser, le copier et le distribuer sans problème. Et vous pouvez même
+  en faire un usage commercial, c'est à dire compacter des fichiers EXE que
+  vous allez vendre. Mais la vente de LZEXE.EXE est interdite.
+```
 
 * **MISC/relocfix.py**: Copyright (c) 2020 Adrian Siekierka, licensed under "zero-clause" BSD
 
@@ -113,6 +126,8 @@ If you'd rather stick to an entirely free software stack for building ZZT, that 
  * The compilation flags "-Mtp" and "-WmLarge" must be used.
  * The methods in VIDEO.PAS using inline(...) must be rewritten, as Free Pascal does not support this form of inline ASM code.
  * SOUNDS.PAS must be patched, as Free Pascal does not support overlapping CASE statements.
+ * As LZEXE is not free software (source unavailable), you may want to consider removing it from your build process or replacing it with another compressor,
+such as UPX (with the --8086 flag).
 
 Please note that, as Free Pascal's RTL is significantly larger, the resulting binary is likewise about 40KB larger - leaving less memory space for game worlds.
 
