@@ -148,8 +148,10 @@ interface
 		THighScoreList = array[1 .. HIGH_SCORE_COUNT] of THighScoreEntry;
 		TIoTmpBuf = array[0 .. 19999] of byte;
 	var
-		unkVar_0472: integer;
-		unkVar_0474: integer;
+		PlayerDirX: integer;
+		PlayerDirY: integer;
+		unkVar_0476: integer;
+		unkVar_0478: integer;
 
 		TransitionTable: array[1 .. 80*25] of TCoord;
 		LoadedGameFileName: TString50;
@@ -169,7 +171,7 @@ interface
 		MessageFakeNotShown: boolean;
 		MessageGemNotShown: boolean;
 		MessageEnergizerNotShown: boolean;
-		unkVar_4AB6: array[0 .. 14] of byte;
+		unkVar_4ABA: array[0 .. 14] of byte;
 
 		GameTitleExitRequested: boolean;
 		GamePlayExitRequested: boolean;

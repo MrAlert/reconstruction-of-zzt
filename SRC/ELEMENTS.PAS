@@ -1348,8 +1348,13 @@ procedure ElementPlayerTick(statId: integer);
 				TickTimeDuration := 0;
 				SoundBlockQueueing := true;
 			end;
-			if InputShiftPressed then begin
-				if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
+			if InputShiftPressed or (InputKeyPressed = ' ') then begin
+				if InputShiftPressed and ((InputDeltaX <> 0) or (InputDeltaY <> 0)) then begin
+					PlayerDirX := InputDeltaX;
+					PlayerDirY := InputDeltaY;
+				end;
+
+				if (PlayerDirX <> 0) or (PlayerDirY <> 0) then begin
 					if Board.Info.MaxShots = 0 then begin
 						if MessageNoShootingNotShown then
 							DisplayMessage(200, 'Can'#39't shoot in this place!');
@@ -1367,7 +1372,7 @@ procedure ElementPlayerTick(statId: integer);
 								bulletCount := bulletCount + 1;
 
 						if bulletCount < Board.Info.MaxShots then begin
-							if BoardShoot(E_BULLET, X, Y, InputDeltaX, InputDeltaY, SHOT_SOURCE_PLAYER) then begin
+							if BoardShoot(E_BULLET, X, Y, PlayerDirX, PlayerDirY, SHOT_SOURCE_PLAYER) then begin
 								World.Info.Ammo := World.Info.Ammo - 1;
 								GameUpdateSidebar;
 
@@ -1380,6 +1385,9 @@ procedure ElementPlayerTick(statId: integer);
 					end;
 				end;
 			end else if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
+				PlayerDirX := InputDeltaX;
+				PlayerDirY := InputDeltaY;
+
 				ElementDefs[Board.Tiles[X + InputDeltaX][Y + InputDeltaY].Element].TouchProc(
 					X + InputDeltaX, Y + InputDeltaY, 0, InputDeltaX, InputDeltaY);
 				if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
@@ -1959,6 +1967,9 @@ procedure InitEditorStatSettings;
 	var
 		i: integer;
 	begin
+		PlayerDirX := 0;
+		PlayerDirY := 0;
+
 		for i := 0 to MAX_ELEMENT do
 			with World.EditorStatSettings[i] do begin
 				P1 := 4;

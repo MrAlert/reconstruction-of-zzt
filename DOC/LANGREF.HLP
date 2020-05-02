@@ -415,7 +415,7 @@ health, etc.
      AMMO
      GEMS
      TORCHES
-     ENERGY
+     HEALTH
      SCORE
 
 Example:  #GIVE AMMO 10  (gives the player
