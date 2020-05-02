@@ -204,7 +204,14 @@ interface
 		ConfigRegistrant: string;
 		ConfigWorldFile: TString50;
 		EditorEnabled: boolean;
+		SerialNumber: TString50;
+		ConfigInvalid: boolean;
+		ResetConfig: boolean;
 		JustStarted: boolean;
+
+		WorldFileDescCount: integer;
+		WorldFileDescKeys: array[1 .. 10] of TString50;
+		WorldFileDescValues: array[1 .. 10] of TString50;
 	const
 		E_EMPTY = 0;
 		E_BOARD_EDGE = 1;

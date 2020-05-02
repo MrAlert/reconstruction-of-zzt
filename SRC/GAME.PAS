@@ -107,7 +107,7 @@ const
 	LineChars: string[16] = #249#208#210#186#181#188#187#185#198#200#201#204#205#202#203#206;
 
 implementation
-uses Dos, Crt, Video, Keys, Sounds, Input, Elements, Editor, Oop;
+uses Dos, Crt, Video, Sounds, Input, Elements, Editor, Oop;
 
 procedure SidebarClearLine(y: integer);
 	begin
@@ -350,7 +350,7 @@ procedure WorldCreate;
 		for i := 1 to MAX_FLAG do
 			World.Info.Flags[i] := '';
 		BoardChange(0);
-		Board.Name := 'Introduction screen';
+		Board.Name := 'Title screen';
 		LoadedGameFileName := '';
 		World.Info.Name := '';
 	end;
@@ -812,35 +812,24 @@ function GameWorldLoad(extension: TString50): boolean;
 		textWindow: TTextWindowState;
 		fileSearchRec: SearchRec;
 		entryName: string;
+		i: integer;
 	begin
+		TextWindowInitState(textWindow);
 		if extension = '.ZZT' then
 			textWindow.Title := 'ZZT Worlds'
 		else
 			textWindow.Title := 'Saved Games';
 		GameWorldLoad := false;
-		textWindow.LinePos := 1;
 		textWindow.Selectable := true;
-		textWindow.LineCount := 0;
 
 		FindFirst('*' + extension, AnyFile, fileSearchRec);
 		while DosError = 0 do begin
 			entryName := Copy(fileSearchRec.Name, 1, Length(fileSearchRec.name) - 4);
-			if entryName = 'TOWN' then
-				entryName := 'TOWN       The Town of ZZT';
-			if entryName = 'DEMO' then
-				entryName := 'DEMO       Demo of the ZZT World Editor';
-			if entryName = 'CAVES' then
-				entryName := 'CAVES      The Caves of ZZT';
-			if entryName = 'DUNGEONS' then
-				entryName := 'DUNGEONS   The Dungeons of ZZT';
-			if entryName = 'CITY' then
-				entryName := 'CITY       Underground City of ZZT';
-			if entryName = 'BEST' then
-				entryName := 'BEST       The Best of ZZT';
-			if entryName = 'PHYSICS' then
-				entryName := 'PHYSICS    The Physics Behind ZZT';
-			if entryName = 'TOUR' then
-				entryName := 'TOUR       Guided Tour ZZT''s Other Worlds';
+
+			for i := 1 to WorldFileDescCount do
+				if entryName = WorldFileDescKeys[i] then
+					entryName := WorldFileDescValues[i];
+
 			TextWindowAppend(textWindow, entryName);
 			FindNext(fileSearchRec);
 		end;
@@ -870,7 +859,7 @@ procedure CopyStatDataToTextWindow(statId: integer; var state: TTextWindowState)
 		i: integer;
 	begin
 		with Board.Stats[statId] do begin
-			state.LineCount := 0;
+			TextWindowInitState(state);
 			dataStr := '';
 			dataPtr := Data;
 
@@ -1478,8 +1467,7 @@ procedure GamePlayLoop(boardChanged: boolean);
 		GameUpdateSidebar;
 
 		if JustStarted then begin
-			if Length(ConfigRegistrant) = 0 then
-				GameAboutScreen;
+			GameAboutScreen;
 			if Length(StartupWorldFileName) <> 0 then begin
 				SidebarClearLine(8);
 				VideoWriteText(69, 8, $1F, StartupWorldFileName);
@@ -1680,39 +1668,51 @@ procedure GameTitleLoop;
 
 procedure GamePrintRegisterMessage;
 	var
-		i: integer;
 		s: string;
-		f: text;
-		iy: integer;
+		f: file;
+		i: integer;
+		ix, iy: integer;
 		color: integer;
+		isReading: boolean;
+		strPtr: pointer;
 	begin
 		SetCBreak(false);
-		i := Random(4) + 1;
-		Str(i, s);
-		Assign(f, 'END' + s + '.MSG');
-		Reset(f);
-
+		s := 'END' + Chr(49 + Random(4)) + '.MSG';
 		iy := 0;
 		color := $0F;
 
-		if IOResult = 0 then begin
-			while (IOResult = 0) and not Eof(f) do begin
-				ReadLn(f, s);
-				if Length(s) = 0 then
-					color := color - 1;
-				for i := 1 to Length(s) do begin
-					VideoWriteText(i - 1, iy, color, s[i]);
-					VideoWriteText(i, iy, $09, #254);
-					KeysUpdateModifiers;
-					if not KeysLeftShiftHeld or not KeysRightShiftHeld then
-						Delay(26);
-					VideoWriteText(i, iy, $0F, ' ');
-				end;
-				iy := iy + 1;
-			end;
+		for i := 1 to ResourceDataHeader.EntryCount do begin
+			if ResourceDataHeader.Name[i] = s then begin
+				Assign(f, ResourceDataFileName);
+				Reset(f, 1);
+				Seek(f, ResourceDataHeader.FileOffset[i]);
 
-			GotoXY(1, 23);
-			exit;
+				isReading := true;
+				while (IOResult = 0) and isReading do begin
+					BlockRead(f, s, 1);
+					strPtr := Ptr(Seg(s), Ofs(s) + 1);
+					if Length(s) = 0 then begin
+						Dec(color);
+					end else begin
+						BlockRead(f, strPtr^, Length(s));
+						if s <> '@' then
+							VideoWriteText(0, iy, color, s)
+						else
+							isReading := false;
+					end;
+					Inc(iy);
+				end;
+
+				Close(f);
+				VideoWriteText(28, 24, $1F, 'Press any key to exit...');
+				TextColor(LightGray);
+
+				repeat until KeyPressed;
+				InputKeyPressed := ReadKey;
+
+				VideoWriteText(28, 24, $00, '                        ');
+				GotoXY(1, 23);
+			end;
 		end;
 	end;
 

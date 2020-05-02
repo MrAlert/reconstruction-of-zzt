@@ -23,6 +23,7 @@
 	SOFTWARE.
 }
 
+{$I-}
 unit Video;
 
 interface
@@ -34,7 +35,8 @@ interface
 	var
 		VideoWriteText: TVideoWriteTextProc;
 		VideoMonochrome: boolean;
-	procedure VideoConfigure;
+	function VideoConfigure: boolean;
+	procedure VideoInstall;
 	procedure VideoShowCursor;
 	procedure VideoHideCursor;
 
@@ -175,37 +177,42 @@ procedure VideoWriteTextBW80(x, y, color: byte; text: TVideoLine);
 
 {$F-}
 
-procedure VideoConfigure;
+function VideoConfigure: boolean;
 	var
 		charTyped: Char;
 	begin
-		WriteLn;
+		charTyped := ' ';
 		if LastMode = 7 then begin
 			VideoWriteText := VideoWriteTextBW80;
 		end else begin
+			Writeln;
 			Write('  Video mode:  C)olor,  M)onochrome?  ');
 			repeat
 				repeat until KeyPressed;
 				charTyped := UpCase(ReadKey);
-			until charTyped in ['C', 'M'];
+			until charTyped in [#27, 'C', 'M'];
 			case charTyped of
-				'C': begin
-					VideoMonochrome := false;
-					VideoWriteText := VideoWriteTextCO80;
-					TextMode(CO80);
-				end;
-				'M': begin
-					if LastMode in [0, 1, 2, 3] then begin
-						VideoWriteText := VideoWriteTextBW80;
-						TextMode(BW80);
-						VideoMonochrome := true;
-					end else begin
-						VideoWriteText := VideoWriteTextBW80;
-						VideoMonochrome := true;
-						TextMode(7);
-					end;
-				end;
+				'C': VideoMonochrome := false;
+				'M': VideoMonochrome := true;
+				#27: VideoMonochrome := (LastMode = 7);
 			end;
+		end;
+		VideoConfigure := charTyped <> #27;
+	end;
+
+procedure VideoInstall;
+	begin
+		if VideoMonochrome then begin
+			if LastMode in [0, 1, 2, 3] then begin
+				VideoWriteText := VideoWriteTextBW80;
+				TextMode(BW80);
+			end else begin
+				VideoWriteText := VideoWriteTextBW80;
+				TextMode(7);
+			end;
+		end else begin
+			VideoWriteText := VideoWriteTextCO80;
+			TextMode(CO80);
 		end;
 		ClrScr;
 	end;

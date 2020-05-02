@@ -203,7 +203,7 @@ procedure EditorLoop;
 			if wasModified then
 				if SidebarPromptYesNo('Save first? ', true) then
 					if InputKeyPressed <> KEY_ESCAPE then
-						GameWorldSave('Save world', LoadedGameFileName, '.SAV');
+						GameWorldSave('Save world', LoadedGameFileName, '.ZZT');
 			World.Info.Name := LoadedGameFileName;
 		end;
 
@@ -360,7 +360,6 @@ procedure EditorLoop;
 			with Board.Stats[statId] do begin
 				state.Title := prompt;
 				TextWindowDrawOpen(state);
-				state.LinePos := 1;
 				state.Selectable := false;
 				CopyStatDataToTextWindow(statId, state);
 
@@ -634,8 +633,12 @@ procedure EditorLoop;
 		copiedTile.Element := 0;
 		copiedTile.Color := $0F;
 
-		BoardChange(World.Info.CurrentBoard);
+		if World.Info.CurrentBoard <> 0 then
+			BoardChange(World.Info.CurrentBoard);
+
 		EditorDrawRefresh;
+		if World.BoardCount = 0 then
+			EditorAppendBoard;
 
 		editorExitRequested := false;
 		repeat
@@ -968,7 +971,7 @@ procedure HighScoresInitTextWindow(var state: TTextWindowState);
 		i: integer;
 		scoreStr: string;
 	begin
-		state.LineCount := 0;
+		TextWindowInitState(state);
 		TextWindowAppend(state, 'Score  Name');
 		TextWindowAppend(state, '-----  ----------------------------------');
 		for i := 1 to HIGH_SCORE_COUNT do begin
@@ -1020,7 +1023,7 @@ procedure EditorEditHelpFile;
 		filename := '';
 		SidebarPromptString('File to edit', '.HLP', filename, PROMPT_ALPHANUM);
 		if Length(filename) <> 0 then begin
-			TextWindowOpenFile(filename + '.HLP', textWindow);
+			TextWindowOpenFile('*' + filename + '.HLP', textWindow);
 			textWindow.Title := 'Editing ' + filename;
 			TextWindowDrawOpen(textWindow);
 			EditorOpenEditTextWindow(textWindow);

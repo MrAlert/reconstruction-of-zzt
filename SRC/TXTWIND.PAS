@@ -23,12 +23,14 @@
 	SOFTWARE.
 }
 
+{$I-}
 unit TxtWind;
 
 interface
 	uses Video;
 	const
 		MAX_TEXT_WINDOW_LINES = 1024;
+		MAX_RESOURCE_DATA_FILES = 24;
 
 		TEXT_WINDOW_X = 5;
 		TEXT_WINDOW_Y = 3;
@@ -84,11 +86,21 @@ interface
 			Lines: array[1 .. MAX_TEXT_WINDOW_LINES] of ^TTextWindowLine;
 			Hyperlink: string[20];
 			Title: TTextWindowLine;
+			LoadedFilename: string[50];
 		end;
 		TTextWindowClearProc = procedure(x, y: integer);
+		TResourceDataHeader = record
+			EntryCount: integer;
+			Name: array[1 .. MAX_RESOURCE_DATA_FILES] of string[50];
+			FileOffset: array[1 .. MAX_RESOURCE_DATA_FILES] of longint;
+		end;
 	var
 		TextWindowClear: TTextWindowClearProc;
 		TextWindowRejected: boolean;
+		ResourceDataFileName: string[50];
+		ResourceDataHeader: TResourceDataHeader;
+		OrderPrintId: ^string;
+	procedure TextWindowInitState(var state: TTextWindowState);
 	procedure TextWindowDrawOpen(state: TTextWindowState);
 	procedure TextWindowDrawClose;
 	procedure TextWindowDraw(var state: TTextWindowState; withoutFormatting, viewingFile: boolean);
@@ -102,6 +114,24 @@ interface
 
 implementation
 uses Crt, Input, Printer;
+
+function UpCaseString(input: string): string;
+	var
+		i: integer;
+	begin
+		for i := 1 to Length(input) do
+			input[i] := UpCase(input[i]);
+		UpCaseString := input;
+	end;
+
+procedure TextWindowInitState(var state: TTextWindowState);
+	begin
+		with state do begin
+			LineCount := 0;
+			LinePos := 1;
+			LoadedFilename := '';
+		end;
+	end;
 
 procedure TextWindowDrawTitle(color: integer; title: TTextWindowLine);
 	begin
@@ -223,6 +253,7 @@ procedure TextWindowFree(var state: TTextWindowState);
 				Dispose(Lines[LineCount]);
 				LineCount := LineCount - 1;
 			end;
+			LoadedFilename := '';
 		end;
 	end;
 
@@ -258,6 +289,9 @@ procedure TextWindowPrint(var state: TTextWindowState);
 					Close(Lst);
 					exit;
 				end;
+			end;
+			if LoadedFilename = 'ORDER.HLP' then begin
+				WriteLn(Lst, OrderPrintId^);
 			end;
 			Write(Lst, Chr(12) { form feed });
 			Close(Lst);
@@ -511,9 +545,13 @@ procedure TextWindowEdit(var state: TTextWindowState);
 
 procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowState);
 	var
+		f: file;
 		tf: text;
 		i: integer;
+		entryPos: integer;
 		retVal: boolean;
+		line: ^string;
+		lineLen: byte;
 	begin
 		with state do begin
 			retVal := true;
@@ -521,19 +559,69 @@ procedure TextWindowOpenFile(filename: TTextWindowLine; var state: TTextWindowSt
 				retVal := retVal and (filename[i] <> '.');
 			if retVal then
 				filename := filename + '.HLP';
-			LineCount := 0;
-			LinePos := 1;
-			{$I-}
-			Assign(tf, filename);
-			Reset(tf);
-			if IOResult <> 0 then exit;
-			while (IOResult = 0) and (not Eof(tf)) do begin
-				LineCount := LineCount + 1;
-				New(Lines[LineCount]);
-				ReadLn(tf, Lines[LineCount]^);
+
+			if filename[1] = '*' then begin
+				filename := Copy(filename, 2, Length(filename) - 1);
+				entryPos := -1;
+			end else begin
+				entryPos := 0;
 			end;
-			{$I+}
-			Close(tf);
+
+			TextWindowInitState(state);
+			LoadedFilename := UpCaseString(filename);
+			if ResourceDataHeader.EntryCount = 0 then begin
+				Assign(f, ResourceDataFileName);
+				Reset(f, 1);
+				if IOResult = 0 then
+					BlockRead(f, ResourceDataHeader, SizeOf(ResourceDataHeader));
+				if IOResult <> 0 then
+					ResourceDataHeader.EntryCount := -1;
+				Close(f);
+			end;
+
+			if entryPos = 0 then begin
+				for i := 1 to ResourceDataHeader.EntryCount do begin
+					if UpCaseString(ResourceDataHeader.Name[i]) = UpCaseString(filename) then
+						entryPos := i;
+				end;
+			end;
+
+			if entryPos <= 0 then begin
+				Assign(tf, filename);
+				Reset(tf);
+				while (IOResult = 0) and (not Eof(tf)) do begin
+					Inc(LineCount);
+					New(Lines[LineCount]);
+					ReadLn(tf, Lines[LineCount]^);
+				end;
+				Close(tf);
+			end else begin
+				Assign(f, ResourceDataFilename);
+				Reset(f, 1);
+				Seek(f, ResourceDataHeader.FileOffset[entryPos]);
+				if IOResult = 0 then begin
+					retVal := true;
+					while (IOResult = 0) and retVal do begin
+						Inc(LineCount);
+						New(Lines[LineCount]);
+
+						BlockRead(f, Lines[LineCount]^, 1);
+						line := Ptr(Seg(Lines[LineCount]^), Ofs(Lines[LineCount]^) + 1);
+						lineLen := Ord(Lines[LineCount]^[0]);
+						if lineLen = 0 then begin
+							Lines[LineCount]^ := '';
+						end else begin
+							BlockRead(f, line^, Ord(Lines[LineCount]^[0]));
+						end;
+
+						if Lines[LineCount]^ = '@' then begin
+							retVal := false;
+							Lines[LineCount]^ := '';
+						end;
+					end;
+					Close(f);
+				end;
+			end;
 		end;
 	end;
 
@@ -582,4 +670,6 @@ procedure TextWindowDefaultClear(x, y: integer);
 
 begin
 	TextWindowClear := TextWindowDefaultClear;
+	ResourceDataFileName := '';
+	ResourceDataHeader.EntryCount := 0;
 end.

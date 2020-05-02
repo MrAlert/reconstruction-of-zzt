@@ -540,9 +540,8 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 	begin
 		with Board.Stats[statId] do begin
 		StartParsing:
+			TextWindowInitState(textWindow);
 			textWindow.Selectable := false;
-			textWindow.LinePos := 1;
-			textWindow.LineCount := 0;
 			stopRunning := false;
 			repeatInsNextTick := false;
 			replaceStat := false;

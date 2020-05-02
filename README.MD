@@ -1,7 +1,7 @@
 # The Reconstruction of ZZT
 
-The Reconstruction of ZZT is a reverse-engineered recreation of the source code to the earliest known official release of
-[ZZT](https://museumofzzt.com/about-zzt), ZZT 2.0. The output executable is byte-for-byte identical with said
+The Reconstruction of ZZT is a reverse-engineered recreation of the source code to
+[ZZT](https://museumofzzt.com/about-zzt) 3.0. The output executable is byte-for-byte identical with said
 release, which means that the source code accurately represents the original engine's behavior.
 
 The intent behind this project is to facilitate improved preservation and accessibility of ZZT's worlds and community,
@@ -44,11 +44,11 @@ on YouTube detailing how to use Zeta and KevEdit to create your own ZZT worlds.
 This release's binary distribution includes:
 
  * **ZZT.EXE** - the ZZT engine executable,
- * **\*.HLP** - the documentation originally included with ZZT,
+ * **ZZT.DAT** - the documentation originally included with ZZT,
  * **DEMO.ZZT** - the official demonstration world, part of ZZT's bundled documentation,
- * **REGISTER** - the ZZT configuration file (set to open DEMO.ZZT by default).
+ * **ZZT.CFG** - the ZZT configuration file (set to open DEMO.ZZT by default).
 
-The source code includes the source format for ZZT.EXE, as well as relevant tools.
+The source code includes the source format for both ZZT.EXE and ZZT.DAT, as well as relevant tools.
 
 ### Why did the source code have to be reconstructed?
 
@@ -64,7 +64,7 @@ adequately catalogued and preserved, please contact me at (kontakt at asie dot p
 
 * **BIN** - output directory for EXE and TPU files,
 * **DIST** - output directory for the binary distribution,
-* **DOC** - documentation files:
+* **DOC** - documentation files used for building ZZT.DAT:
     * **ABOUT.HLP** - about text,
     * **GAME.HLP** - help text (play),
     * **EDITOR.HLP** - help text (editor):
@@ -75,10 +75,11 @@ adequately catalogued and preserved, please contact me at (kontakt at asie dot p
     * **relocfix.py** - Python 3 script for fixing relocation table segments in EXE binaries after LZEXE decompression,
 * **RES** - resource files which are not otherwise recompiled:
     * **DEMO.ZZT** - the official ZZT demonstration world,
-    * **REGISTER** - the ZZT configuration file used for the binary distribution,
+    * **ZZT.CFG** - the ZZT configuration file used for the binary distribution,
 * **SRC** - the reconstructed ZZT source code,
     * **ZZT.PAS** - main source file,
 * **TOOLS** - tools used when building:
+    * **DATPACK.PAS** - DATPACK, a tool for creating and extracting the ZZT.DAT file (source code),
     * **LZEXE.EXE** - LZEXE, a .EXE compression tool by Fabrice Bellard,
 * **BUILD.BAT** - source code build script,
 * **LICENSE.TXT** - licensing terms for the source code release.
@@ -113,7 +114,7 @@ The Reconstruction of ZZT is licensed under the terms of the MIT license as desc
 2. From the source code directory, run `BUILD.BAT`.
 3. The DIST directory will contain files comprising the release as outlined in the FAQ.
 
-If the source code has not been modified, the resulting **ZZT.EXE** file should be byte-for-byte identical with the **ZZT.EXE** bundled with ZZT 2.0.
+If the source code has not been modified, the resulting **ZZT.EXE** file should be byte-for-byte identical with the **ZZT.EXE** bundled with ZZT 3.0.
 
 ### Compilation FAQ
 
