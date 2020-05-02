@@ -1,7 +1,7 @@
 # The Reconstruction of ZZT
 
 The Reconstruction of ZZT is a reverse-engineered recreation of the source code to
-[ZZT](https://museumofzzt.com/about-zzt) 3.0. The output executable is byte-for-byte identical with said
+[ZZT](https://museumofzzt.com/about-zzt) 3.1. The output executable is byte-for-byte identical with said
 release, which means that the source code accurately represents the original engine's behavior.
 
 The intent behind this project is to facilitate improved preservation and accessibility of ZZT's worlds and community,
@@ -45,8 +45,7 @@ This release's binary distribution includes:
 
  * **ZZT.EXE** - the ZZT engine executable,
  * **ZZT.DAT** - the documentation originally included with ZZT,
- * **DEMO.ZZT** - the official demonstration world, part of ZZT's bundled documentation,
- * **ZZT.CFG** - the ZZT configuration file (set to open DEMO.ZZT by default).
+ * **DEMO.ZZT** - the official demonstration world, part of ZZT's bundled documentation.
 
 The source code includes the source format for both ZZT.EXE and ZZT.DAT, as well as relevant tools.
 
@@ -75,7 +74,6 @@ adequately catalogued and preserved, please contact me at (kontakt at asie dot p
     * **relocfix.py** - Python 3 script for fixing relocation table segments in EXE binaries after LZEXE decompression,
 * **RES** - resource files which are not otherwise recompiled:
     * **DEMO.ZZT** - the official ZZT demonstration world,
-    * **ZZT.CFG** - the ZZT configuration file used for the binary distribution,
 * **SRC** - the reconstructed ZZT source code,
     * **ZZT.PAS** - main source file,
 * **TOOLS** - tools used when building:
@@ -114,7 +112,7 @@ The Reconstruction of ZZT is licensed under the terms of the MIT license as desc
 2. From the source code directory, run `BUILD.BAT`.
 3. The DIST directory will contain files comprising the release as outlined in the FAQ.
 
-If the source code has not been modified, the resulting **ZZT.EXE** file should be byte-for-byte identical with the **ZZT.EXE** bundled with ZZT 3.0.
+If the source code has not been modified, the resulting **ZZT.EXE** file should be byte-for-byte identical with the **ZZT.EXE** bundled with ZZT 3.1.
 
 ### Compilation FAQ
 

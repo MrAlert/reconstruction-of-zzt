@@ -65,6 +65,7 @@ interface
 		InputMouseButtonX, InputMouseButtonY: integer;
 		InputJoystickMoved: boolean;
 		JoystickXInitial, JoystickYInitial: integer;
+		InputLastDeltaX, InputLastDeltaY: integer;
 	procedure InputUpdate;
 	procedure InputInitDevices;
 	procedure InputReadWaitKey;
@@ -87,7 +88,7 @@ function InputIsJoystickButtonPressed: boolean;
 
 procedure InputJoystickGetCoords(var x, y: integer);
 	var
-		startTicks: integer;
+		startTicks: word;
 	begin
 		x := 0;
 		y := 0;
@@ -318,6 +319,11 @@ procedure InputUpdate;
 				InputMouseButtonY := 0;
 			end;
 		end;
+
+		if (InputDeltaX <> 0) or (InputDeltaY <> 0) then begin
+			InputLastDeltaX := InputDeltaX;
+			InputLastDeltaY := InputDeltaY;
+		end;
 	end;
 
 function InputInitMouse: boolean;
@@ -383,6 +389,8 @@ procedure InputReadWaitKey;
 	end;
 
 begin
+	InputLastDeltaX := 0;
+	InputLastDeltaY := 0;
 	InputDeltaX := 0;
 	InputDeltaY := 0;
 	InputShiftPressed := false;

@@ -302,7 +302,7 @@ procedure EditorLoop;
 						1: begin
 							PopupPromptString('New title for board:', Board.Name);
 							exitRequested := true;
-							TextWindowDrawClose;
+							TextWindowDrawClose(state);
 						end;
 						2: begin
 							Str(Board.Info.MaxShots, numStr);
@@ -337,12 +337,12 @@ procedure EditorLoop;
 						end;
 						10: begin
 							exitRequested := true;
-							TextWindowDrawClose;
+							TextWindowDrawClose(state);
 						end;
 					end
 				else begin
 					exitRequested := true;
-					TextWindowDrawClose;
+					TextWindowDrawClose(state);
 				end;
 			until exitRequested;
 
@@ -388,7 +388,7 @@ procedure EditorLoop;
 				end;
 
 				TextWindowFree(state);
-				TextWindowDrawClose;
+				TextWindowDrawClose(state);
 				InputKeyPressed := #0;
 			end;
 		end;
@@ -992,7 +992,7 @@ procedure HighScoresDisplay(linePos: integer);
 			state.Title := 'High scores for ' + World.Info.Name;
 			TextWindowDrawOpen(state);
 			TextWindowSelect(state, false, true);
-			TextWindowDrawClose;
+			TextWindowDrawClose(state);
 		end;
 		TextWindowFree(state);
 	end;
@@ -1029,7 +1029,7 @@ procedure EditorEditHelpFile;
 			EditorOpenEditTextWindow(textWindow);
 			TextWindowSaveFile(filename + '.HLP', textWindow);
 			TextWindowFree(textWindow);
-			TextWindowDrawClose;
+			TextWindowDrawClose(textWindow);
 		end;
 	end;
 
@@ -1059,7 +1059,7 @@ procedure HighScoresAdd(score: integer);
 			HighScoreList[listPos].Name := name;
 			HighScoresSave;
 
-			TextWindowDrawClose;
+			TextWindowDrawClose(textWindow);
 			TransitionDrawToBoard;
 			TextWindowFree(textWindow);
 		end;
@@ -1098,7 +1098,7 @@ function EditorSelectBoard(title: string; currentBoard: integer; titleScreenIsNo
 		TextWindowAppend(textWindow, 'Add new board');
 		TextWindowDrawOpen(textWindow);
 		TextWindowSelect(textWindow, false, false);
-		TextWindowDrawClose;
+		TextWindowDrawClose(textWindow);
 		TextWindowFree(textWindow);
 		if InputKeyPressed = KEY_ESCAPE then
 			EditorSelectBoard := 0

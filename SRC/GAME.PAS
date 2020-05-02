@@ -651,22 +651,31 @@ procedure PauseOnError;
 
 function DisplayIOError: boolean;
 	var
-		errorMsg: TString50;
+		errorNumStr: TString50;
+		textWindow: TTextWindowState;
 	begin
 		if IOResult = 0 then begin
 			DisplayIOError := false;
 			exit;
 		end;
 
-		case IOResult of
-			2: errorMsg := 'File not found!';
-			3: errorMsg := 'Path not found!';
-			101: errorMsg := 'Disk full!';
-		else errorMsg := 'DOS Error!' end;
-		SidebarClearLine(5);
-		VideoWriteText(63, 5, $1F, errorMsg);
-		PauseOnError;
 		DisplayIOError := true;
+
+		textWindow.Title := 'Error';
+		TextWindowInitState(textWindow);
+		TextWindowAppend(textWindow, '$DOS Error:');
+		TextWindowAppend(textWindow, '');
+		TextWindowAppend(textWindow, 'This may be caused by missing');
+		TextWindowAppend(textWindow, 'ZZT files or a bad disk.  If');
+		TextWindowAppend(textWindow, 'you are trying to save a game,');
+		TextWindowAppend(textWindow, 'your disk may be full -- try');
+		TextWindowAppend(textWindow, 'using a blank, formatted disk');
+		TextWindowAppend(textWindow, 'for saving the game!');
+
+		TextWindowDrawOpen(textWindow);
+		TextWindowSelect(textWindow, false, false);
+		TextWindowDrawClose(textWindow);
+		TextWindowFree(textWindow);
 	end;
 
 procedure WorldUnload;
@@ -837,7 +846,7 @@ function GameWorldLoad(extension: TString50): boolean;
 
 		TextWindowDrawOpen(textWindow);
 		TextWindowSelect(textWindow, false, false);
-		TextWindowDrawClose;
+		TextWindowDrawClose(textWindow);
 
 		if (textWindow.LinePos < textWindow.LineCount) and not TextWindowRejected then begin
 			entryName := textWindow.Lines[textWindow.LinePos]^;
@@ -1037,17 +1046,17 @@ procedure PopupPromptString(question: string; var buffer: TString50);
 	var
 		x, y: integer;
 	begin
-		VideoWriteText(3, 18, $4F, TEXT_WINDOW_STR_TOP);
-		VideoWriteText(3, 19, $4F, TEXT_WINDOW_STR_TEXT);
-		VideoWriteText(3, 20, $4F, TEXT_WINDOW_STR_SEP);
-		VideoWriteText(3, 21, $4F, TEXT_WINDOW_STR_TEXT);
-		VideoWriteText(3, 22, $4F, TEXT_WINDOW_STR_TEXT);
-		VideoWriteText(3, 23, $4F, TEXT_WINDOW_STR_BOTTOM);
-		VideoWriteText(4 + (TEXT_WINDOW_WIDTH - Length(question)) div 2, 19, $4F, question);
+		VideoWriteText(3, 18, $4F, TextWindowStrTop);
+		VideoWriteText(3, 19, $4F, TextWindowStrText);
+		VideoWriteText(3, 20, $4F, TextWindowStrSep);
+		VideoWriteText(3, 21, $4F, TextWindowStrText);
+		VideoWriteText(3, 22, $4F, TextWindowStrText);
+		VideoWriteText(3, 23, $4F, TextWindowStrBottom);
+		VideoWriteText(4 + (TextWindowWidth - Length(question)) div 2, 19, $4F, question);
 		buffer := '';
-		PromptString(10, 22, $4F, $4E, TEXT_WINDOW_WIDTH - 16, PROMPT_ANY, buffer);
+		PromptString(10, 22, $4F, $4E, TextWindowWidth - 16, PROMPT_ANY, buffer);
 		for y := 18 to 23 do
-			for x := 3 to (TEXT_WINDOW_WIDTH + 3) do
+			for x := 3 to (TextWindowWidth + 3) do
 				BoardDrawTile(x + 1, y + 1);
 	end;
 
@@ -1357,6 +1366,8 @@ procedure GameDebugPrompt;
 			else
 				WorldClearFlag(input);
 		end;
+
+		DebugEnabled := WorldGetFlagPosition('DEBUG') >= 0;
 
 		if WorldGetFlagPosition('DEBUG') >= 0 then begin
 			if input = 'health' then

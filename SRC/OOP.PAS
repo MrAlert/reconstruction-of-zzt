@@ -838,7 +838,7 @@ procedure OopExecute(statId: integer; var position: integer; name: TString50);
 				textWindow.Title := name;
 				TextWindowDrawOpen(textWindow);
 				TextWindowSelect(textWindow, true, false);
-				TextWindowDrawClose;
+				TextWindowDrawClose(textWindow);
 				TextWindowFree(textWindow);
 
 				if Length(textWindow.Hyperlink) <> 0 then

@@ -206,7 +206,7 @@ interface
 		EditorEnabled: boolean;
 		SerialNumber: TString50;
 		ConfigInvalid: boolean;
-		ResetConfig: boolean;
+		ResetConfig: boolean; { This flag is a remnant from ZZT 3.0. }
 		JustStarted: boolean;
 
 		WorldFileDescCount: integer;
