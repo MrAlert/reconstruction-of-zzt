@@ -661,9 +661,10 @@ function DisplayIOError: boolean;
 
 		DisplayIOError := true;
 
-		textWindow.Title := 'Error';
+		Str(IOResult, textWindow.Title);
+		textWindow.Title := 'Error # ' + textWindow.Title;
 		TextWindowInitState(textWindow);
-		TextWindowAppend(textWindow, '$DOS Error:');
+		TextWindowAppend(textWindow, '$DOS Error: ');
 		TextWindowAppend(textWindow, '');
 		TextWindowAppend(textWindow, 'This may be caused by missing');
 		TextWindowAppend(textWindow, 'ZZT files or a bad disk.  If');
@@ -766,38 +767,47 @@ procedure WorldSave(filename, extension: TString50);
 		unk1: integer;
 		ptr: pointer;
 		version: integer;
+	label OnError;
 	begin
 		BoardClose;
 		VideoWriteText(63, 5, $1F, 'Saving...');
 
 		Assign(f, filename + extension);
 		Rewrite(f, 1);
-		if DisplayIOError then exit;
 
-		ptr := IoTmpBuf;
-		FillChar(IoTmpBuf^, WORLD_FILE_HEADER_SIZE, 0);
-		version := -1;
-		Move(version, ptr^, SizeOf(version));
-		AdvancePointer(ptr, SizeOf(version));
+		if not DisplayIOError then begin
+			ptr := IoTmpBuf;
+			FillChar(IoTmpBuf^, WORLD_FILE_HEADER_SIZE, 0);
+			version := -1;
+			Move(version, ptr^, SizeOf(version));
+			AdvancePointer(ptr, SizeOf(version));
 
-		Move(World.BoardCount, ptr^, SizeOf(World.BoardCount));
-		AdvancePointer(ptr, SizeOf(World.BoardCount));
+			Move(World.BoardCount, ptr^, SizeOf(World.BoardCount));
+			AdvancePointer(ptr, SizeOf(World.BoardCount));
 
-		Move(World.Info, ptr^, SizeOf(World.Info));
-		AdvancePointer(ptr, SizeOf(World.Info));
+			Move(World.Info, ptr^, SizeOf(World.Info));
+			AdvancePointer(ptr, SizeOf(World.Info));
 
-		BlockWrite(f, IoTmpBuf^, WORLD_FILE_HEADER_SIZE);
-		if DisplayIOError then exit;
+			BlockWrite(f, IoTmpBuf^, WORLD_FILE_HEADER_SIZE);
+			if DisplayIOError then goto OnError;
 
-		for i := 0 to World.BoardCount do begin
-			BlockWrite(f, World.BoardLen[i], 2);
-			if DisplayIOError then exit;
+			for i := 0 to World.BoardCount do begin
+				BlockWrite(f, World.BoardLen[i], 2);
+				if DisplayIOError then goto OnError;
 
-			BlockWrite(f, World.BoardData[i]^, World.BoardLen[i]);
-			if DisplayIOError then exit;
+				BlockWrite(f, World.BoardData[i]^, World.BoardLen[i]);
+				if DisplayIOError then goto OnError;
+			end;
 		end;
 
+		BoardOpen(World.Info.CurrentBoard);
+		SidebarClearLine(5);
 		Close(f);
+		exit;
+
+	OnError:
+		Close(f);
+		Erase(f);
 		BoardOpen(World.Info.CurrentBoard);
 		SidebarClearLine(5);
 	end;
@@ -1352,14 +1362,14 @@ procedure GameDebugPrompt;
 		SidebarClearLine(5);
 
 		PromptString(63, 5, $1E, $0F, 11, PROMPT_ANY, input);
+		for i := 1 to Length(input) do
+			input[i] := UpCase(input[i]);
 
 		toggle := true;
 		if (input[1] = '+') or (input[1] = '-') then begin
 			if input[1] = '-' then
 				toggle := false;
 			input := Copy(input, 2, Length(input) - 1);
-			for i := 1 to Length(input) do
-				input[i] := UpCase(input[i]);
 
 			if toggle = true then
 				WorldSetFlag(input)
@@ -1369,28 +1379,26 @@ procedure GameDebugPrompt;
 
 		DebugEnabled := WorldGetFlagPosition('DEBUG') >= 0;
 
-		if WorldGetFlagPosition('DEBUG') >= 0 then begin
-			if input = 'health' then
-				World.Info.Health := World.Info.Health + 50
-			else if input = 'ammo' then
-				World.Info.Ammo := World.Info.Ammo + 5
-			else if input = 'keys' then
-				for i := 1 to 7 do World.Info.Keys[i] := true
-			else if input = 'torches' then
-				World.Info.Torches := World.Info.Torches + 3
-			else if input = 'time' then
-				World.Info.BoardTimeSec := World.Info.BoardTimeSec - 30
-			else if input = 'gems' then
-				World.Info.Gems := World.Info.Gems + 5
-			else if input = 'dark' then begin
-				Board.Info.IsDark := toggle;
-				TransitionDrawToBoard;
-			end else if input = 'zap' then begin
-				for i := 0 to 3 do begin
-					BoardDamageTile(Board.Stats[0].X + NeighborDeltaX[i], Board.Stats[0].Y + NeighborDeltaY[i]);
-					Board.Tiles[Board.Stats[0].X + NeighborDeltaX[i]][Board.Stats[0].Y + NeighborDeltaY[i]].Element := E_EMPTY;
-					BoardDrawTile(Board.Stats[0].X + NeighborDeltaX[i], Board.Stats[0].Y + NeighborDeltaY[i]);
-				end;
+		if input = 'HEALTH' then
+			World.Info.Health := World.Info.Health + 50
+		else if input = 'AMMO' then
+			World.Info.Ammo := World.Info.Ammo + 5
+		else if input = 'KEYS' then
+			for i := 1 to 7 do World.Info.Keys[i] := true
+		else if input = 'TORCHES' then
+			World.Info.Torches := World.Info.Torches + 3
+		else if input = 'TIME' then
+			World.Info.BoardTimeSec := World.Info.BoardTimeSec - 30
+		else if input = 'GEMS' then
+			World.Info.Gems := World.Info.Gems + 5
+		else if input = 'DARK' then begin
+			Board.Info.IsDark := toggle;
+			TransitionDrawToBoard;
+		end else if input = 'ZAP' then begin
+			for i := 0 to 3 do begin
+				BoardDamageTile(Board.Stats[0].X + NeighborDeltaX[i], Board.Stats[0].Y + NeighborDeltaY[i]);
+				Board.Tiles[Board.Stats[0].X + NeighborDeltaX[i]][Board.Stats[0].Y + NeighborDeltaY[i]].Element := E_EMPTY;
+				BoardDrawTile(Board.Stats[0].X + NeighborDeltaX[i], Board.Stats[0].Y + NeighborDeltaY[i]);
 			end;
 		end;
 

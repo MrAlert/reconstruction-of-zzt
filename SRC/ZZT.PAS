@@ -55,16 +55,21 @@ procedure ParseArguments;
 procedure GameConfigure;
 	var
 		tmp: integer;
-		cfgJoystickSupport, cfgMouseSupport, cfgJoystick, cfgMouse, cfgMono: boolean;
 		joystickSupported, mouseSupported: boolean;
-		cfgLastMode, cfgJoystickX, cfgJoystickY: integer;
+		cfgFile: text;
 	begin
 		ConfigInvalid := true;
 		EditorEnabled := true;
 		ConfigRegistrant := '';
 		ConfigWorldFile := '';
-		SerialNumber := 'NONE';
+		SerialNumber := '3.2';
 
+		Assign(cfgFile, 'zzt.cfg');
+		Reset(cfgFile);
+		if IOResult = 0 then begin
+			Readln(cfgFile, ConfigWorldFile);
+			Readln(cfgFile, ConfigRegistrant);
+		end;
 		if ConfigWorldFile[1] = '*' then begin
 			EditorEnabled := false;
 			ConfigWorldFile := Copy(ConfigWorldFile, 2, Length(ConfigWorldFile) - 1);
@@ -78,21 +83,19 @@ procedure GameConfigure;
 		mouseSupported := InputMouseEnabled;
 
 		ConfigInvalid := false;
-		cfgJoystick := InputJoystickEnabled;
-		cfgMouse := InputMouseEnabled;
 
 		Window(1, 1, 80, 25);
-		TextBackground(Brown);
+		TextBackground(Black);
 		ClrScr;
 		TextColor(White);
 		TextColor(White);
 		Writeln;
-		Writeln('                        ZZT:  The Object-Oriented Game');
+		Writeln('                                 <=-  ZZT  -=>');
 		TextColor(Yellow);
 		if Length(ConfigRegistrant) = 0 then
-			Writeln('                             Shareware version 3.1')
+			Writeln('                             Shareware version 3.2')
 		else
-			Writeln('                                  Version 3.1');
+			Writeln('                                  Version  3.2');
 		Writeln('                            Created by Tim Sweeney');
 		GotoXY(1, 7);
 		TextColor(Blue);
@@ -109,7 +112,8 @@ procedure GameConfigure;
 		GotoXY(66, 25);
 		Write('ESC');
 		Window(1, 8, 80, 23);
-		TextBackground(Blue);
+		TextColor(Yellow);
+		TextBackground(Black);
 		ClrScr;
 		TextColor(Yellow);
 		if not InputConfigure then
@@ -174,6 +178,7 @@ begin
 	SoundUninstall;
 	SoundClearQueue;
 
+	VideoUninstall;
 	Port[PORT_CGA_PALETTE] := 0;
 	TextAttr := InitialTextAttr;
 	ClrScr;
@@ -182,7 +187,7 @@ begin
 		GamePrintRegisterMessage;
 	end else begin
 		Writeln;
-		Writeln('  Thank you for playing ZZT.');
+		Writeln('  Registered version -- Thank you for playing ZZT.');
 		Writeln;
 	end;
 
